@@ -1,6 +1,8 @@
 # 🔒 Ecrypta – Secure Ephemeral Chat App
 
-A **fully encrypted, real-time chat application** with **private, self-destructing chat rooms**, built using **Elysia**, **Next.js**, and **Redis**.
+![Ecryopto](/public/message.png)
+
+**fully encrypted, real-time chat application** with **private, self-destructing chat rooms**, built using **Elysia**, **Next.js**, and **Redis**.
 
 Every chat is **private**, **end-to-end encrypted**, and **automatically deleted after 10 minutes**, ensuring **complete privacy**. Custom middleware ensures that **only authorized users** can access chat rooms, with multiple token verifications for enhanced security.
 
