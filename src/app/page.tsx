@@ -1,42 +1,16 @@
-"use client";
+"use client"
 
+import { useUsername } from "@/hooks/user-username";
 import { client } from "@/libs/client";
 import { useMutation } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-const ANIMALS = [
-  "shadow_wolf",
-  "sky_hawk",
-  "night_fox",
-  "iron_bear",
-  "storm_eagle",
-  "crimson_tiger",
-  "phantom_panther",
-  "silver_serpent"
-];
+import { useRouter, useSearchParams } from "next/navigation";
 
-const STORAGE_KEY = "chat_username";
-const generateUsername = () => {
-  const word = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `anonymous-${word}-${nanoid(8)}`
-}
 const Home = () => {
-  const [username, setUserName] = useState("");
+  const { username } = useUsername();
   const router = useRouter();
-  useEffect(() => {
-    const main = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setUserName(stored);
-        return
-      }
-      const generateRandomUserName = generateUsername();
-      localStorage.setItem(STORAGE_KEY, generateRandomUserName);
-      setUserName(generateRandomUserName)
-    }
-    main()
-  }, [])
+  const searchParams = useSearchParams();
+  const wasDestroyed = searchParams.get("destroyed") === "true";
+  const error = searchParams.get("error")
 
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
@@ -45,16 +19,36 @@ const Home = () => {
       if (res.status === 200) {
         router.push(`/room/${res.data?.roomId}`)
       }
+
       console.log("Entered IN the room")
     }
   });
   const handleSubmit = () => {
-    createRoom();
+    createRoom()
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
+        {wasDestroyed && <div className="bg-rose-900/50 border border-rose-900 p-4 text-center">
+          <p className="font-bold text-rose-500 text-sm">ROOM DESTROY</p>
+          <p className="text-zinc-500 text-xs mt-1">
+            All messages were permanently deleted.
+          </p>
+        </div>}
+        {error === "room-not-found" && <div className="bg-rose-900/50 border border-rose-900 p-4 text-center">
+          <p className="font-bold text-rose-500 text-sm">ROOM DOE&lsquo;S NOT EXISTS</p>
+          <p className="text-zinc-500 text-xs mt-1">
+            This room may have expired or never existed.
+          </p>
+        </div>}
+        {error === "room-full" && <div className="bg-rose-900/50 border border-rose-900 p-4 text-center">
+          <p className="font-bold text-rose-500 text-sm">ROOM FULL</p>
+          <p className="text-zinc-500 text-xs mt-1">
+            This room is at maximum capacity.
+          </p>
+        </div>}
+
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold tracking-tight text-green-500">
             {">"}Private_chat
@@ -78,5 +72,4 @@ const Home = () => {
     </main>
   )
 }
-
-export default Home
+export default Home;

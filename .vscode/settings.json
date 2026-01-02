@@ -1,8 +1,11 @@
 {
 	"cSpell.words": [
+		"Ecrypta",
 		"Elysia",
 		"hget",
 		"hgetall",
-		"hset"
+		"hset",
+		"lrange",
+		"rpush"
 	]
 }
