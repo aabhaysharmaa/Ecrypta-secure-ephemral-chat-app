@@ -4,8 +4,7 @@ import { nanoid } from 'nanoid';
 import { authMiddleware } from './auth';
 import { message as Message, realtime } from '@/libs/realtime';
 import * as z from "zod";
-const ROOM_TTL_SECONDS = 60 * 10;
-
+const ROOM_TTL_SECONDS = 60 * 10
 const rooms = new Elysia({ prefix: "/room" }).post(("/create"), async () => {
 	const roomId = nanoid();
 
@@ -19,6 +18,14 @@ const rooms = new Elysia({ prefix: "/room" }).post(("/create"), async () => {
 }).use(authMiddleware).get("/ttl", async ({ auth }) => {
 	const ttl = await redis.ttl(`meta:${auth.roomId}`)
 	return { ttl: ttl > 0 ? ttl : 0 }
+}, { query: z.object({ roomId: z.string() }) }).delete("/", async ({ auth }) => {
+
+	await Promise.all([
+		redis.del(auth.roomId),
+		redis.del(`meta:${auth.roomId}`),
+		redis.del(`messages:${auth.roomId}`)
+	])
+	await realtime.channel(auth.roomId).emit("chat.destroy", { isDestroyed: true })
 }, { query: z.object({ roomId: z.string() }) })
 
 const messages = new Elysia({ prefix: "/messages" }).use(authMiddleware).post("/", async ({ body, auth }) => {
@@ -69,3 +76,6 @@ export const app = new Elysia({ prefix: '/api' }).use(rooms).use(messages)
 
 export const GET = app.fetch
 export const POST = app.fetch
+export const DELETE = app.fetch
+
+export type App = typeof app

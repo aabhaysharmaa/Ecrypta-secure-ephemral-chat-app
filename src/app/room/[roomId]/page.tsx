@@ -13,7 +13,6 @@ const formatTimeRemaining = (seconds: number) => {
 	return `${mins}:${sec.toString().padStart(2, "0")}`
 }
 
-
 const RoomId = () => {
 	const [copyStatus, setCopyStatus] = useState("COPY");
 	const { username } = useUsername();
@@ -24,6 +23,13 @@ const RoomId = () => {
 	if (typeof roomId !== "string") {
 		throw new Error("Invalid roomId")
 	}
+	const [input, setInput] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
+	const { mutate: destroyRoom } = useMutation({
+		mutationFn: async () => {
+			await client.room.delete(null, { query: { roomId } })
+		}
+	})
 
 	const copyLink = () => {
 		const url = window.location.href
@@ -31,13 +37,11 @@ const RoomId = () => {
 		setCopyStatus("COPIED")
 		setTimeout(() => setCopyStatus("COPY"), 2000)
 	};
-	const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
-
+	const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 	const { data: ttlData } = useQuery({
 		queryKey: ['ttl'],
 		queryFn: async () => {
 			const res = await client.room.ttl.get({ query: { roomId } })
-			setInput("")
 			return res.data
 		}
 	})
@@ -49,6 +53,7 @@ const RoomId = () => {
 			return res.data
 		}
 	})
+
 	const { mutate: sendMessage, isPending } = useMutation({
 		mutationFn: async ({ text }: { text: string }) => {
 			await client.messages.post({ sender: username, text }, { query: { roomId } })
@@ -65,14 +70,12 @@ const RoomId = () => {
 		}
 	})
 
-	const [input, setInput] = useState("");
-	const inputRef = useRef<HTMLInputElement>(null);
+
 	const handleSubmit = () => {
 		sendMessage({ text: input })
-		inputRef.current?.focus()
 		setInput("");
+		inputRef.current?.focus()
 	}
-
 	useEffect(() => {
 		if (ttlData?.ttl !== undefined) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect
@@ -80,6 +83,9 @@ const RoomId = () => {
 		}
 	}, [ttlData])
 
+	const handelDestroyRoom = () => {
+		destroyRoom()
+	}
 	useEffect(() => {
 
 		if (timeRemaining === null || timeRemaining < 0) return
@@ -100,7 +106,7 @@ const RoomId = () => {
 		return () => clearInterval(interval)
 	}, [router, timeRemaining])
 	return (
-		<main className="flex flex-col h-screen max-h-screen overflow-hidden">
+		<main className="flex flex-col h-screen max-h-screen overflow-hidden" >
 			<header className="border-b border border-zinc-800 p-4 flex items-center justify-between bg-zinc-900/30">
 				<div className="flex items-center gap-4">
 					<div className="flex flex-col">
@@ -122,7 +128,7 @@ const RoomId = () => {
 						</span>
 					</div>
 				</div>
-				<button className="text-xs bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-colors group flex items-center gap-2 disabled:opacity-50">
+				<button onClick={handelDestroyRoom} className="text-xs bg-zinc-800 hover:bg-red-600 px-3 py-1.5 rounded text-zinc-400 hover:text-white font-bold transition-colors group flex items-center gap-2 disabled:opacity-50">
 					<span className="group-hover:animate-pulse">💣</span>
 					DESTROY NOW
 				</button>
@@ -159,6 +165,7 @@ const RoomId = () => {
 						<input placeholder="Type Message..." value={input} onKeyDown={(e) => {
 							if (e.key === "Enter" && input.trim()) {
 								sendMessage({ text: input })
+								setInput("")
 								inputRef.current?.focus()
 							}
 						}} onChange={(e) => setInput(e.target.value)} type="text" autoFocus className="w-full bg-black border border-zinc-800 focus:border-zinc-700 focus:outline-none transition-colors text-zinc-100  placeholder:text-zinc-700 py-3 pl-8 pr-4 text-sm" />

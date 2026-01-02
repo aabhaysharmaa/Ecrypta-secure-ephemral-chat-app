@@ -15,12 +15,9 @@ const Home = () => {
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
       const res = await client.room.create.post();
-      console.log("RES :", res)
       if (res.status === 200) {
         router.push(`/room/${res.data?.roomId}`)
       }
-
-      console.log("Entered IN the room")
     }
   });
   const handleSubmit = () => {
